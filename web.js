@@ -1,14 +1,12 @@
 var express = require('express');
+var fs = require('fs');
 
 var app = express.createServer(express.logger());
 
 app.get('/', function(request, response) {
-	var fs = require('fs');
-	var outfile = "hello.txt";
-	var out = "Modify this script to write out something different.\n";
-	fs.writeFileSync(outfile, out);  
-	console.log("Script: " + __filename + "\nWrote: " + out + "To: " + outfile);  
-	response.send('Hello World!');
+	//var content = fs.readFileSync("index.html");
+	//response.send(content);
+	response.send("Temp hello version 2");
 });
 
 var port = process.env.PORT || 5000;
