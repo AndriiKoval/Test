@@ -36,18 +36,23 @@ var assertFileExists = function(infile) {
     return instr;
 };
 
+var cheerioHtmlFile = function(content) {
+    return cheerio.load(content);
+};
+
 var loadChecks = function(checksfile) {
     return JSON.parse(fs.readFileSync(checksfile));
 };
 
-var checkHtmlFile = function(content, checksfile) {
-    $ = cheerio.load(content);
+var checkHtmlFile = function(htmlfile, checksfile) {
+    $ = cheerioHtmlFile(htmlfile);
     var checks = loadChecks(checksfile).sort();
     var out = {};
     for(var ii in checks) {
         var present = $(checks[ii]).length > 0;
         out[checks[ii]] = present;
     }
+	
     return out;
 };
 
@@ -57,11 +62,15 @@ var clone = function(fn) {
     return fn.bind({});
 };
 
-function processFile(content, checks) {
-    var checkJson = checkHtmlFile(content, checks);
+function process(content) {
+	var checkJson = checkHtmlFile(content, program.checks);
     var outJson = JSON.stringify(checkJson, null, 4);
     console.log(outJson);
 	fs.writeFileSync("outJson.txt", outJson);
+}
+
+function onSuccess(data, response) {
+	console.log(response.rawEncoded.toString());
 }
 
 if(require.main == module) {
@@ -72,16 +81,12 @@ if(require.main == module) {
         .parse(process.argv);
 		
 	if (program.url) {
-		restler.get(program.url).on(
-			"success", 
-			function (data, response) {
-				processFile(response.rawEncoded, program.checks);	
-			});
+		restler.get(program.url).on("success", onSuccess);
+		return;
 	}
-	else {
-		processFile(fs.readFileSync(program.file), program.checks);
-	}
-} 
-else {
+
+	process(fs.readFileSync(program.file));
+
+} else {
     exports.checkHtmlFile = checkHtmlFile;
 }
